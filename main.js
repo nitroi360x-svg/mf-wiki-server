@@ -1,119 +1,160 @@
-console.log("Wiki loaded in neon retro mode.");
-
-const SITE_VERSION = "V.0.1";
-const SERVER_URL = "https://mf-wiki-server.onrender.com"; // твой Render URL
-
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("Wiki loaded in neon retro mode.");
 
+    const SITE_VERSION = "V.2.0";
+
+    // === Версия сайта ===
     const versionLabel = document.querySelector(".version-label");
     if (versionLabel) versionLabel.textContent = SITE_VERSION;
 
-    const gallery = document.querySelector(".gallery");
-    if (!gallery) return;
+    // =====================================================
+    // ===================== МУЗЫКА ========================
+    // =====================================================
 
-    const consoleInput = document.getElementById("consoleInput");
-    const consoleBtn = document.getElementById("consoleBtn");
-    const consoleOutput = document.getElementById("consoleOutput");
-    const uploadBtn = document.querySelector(".upload-btn");
+    // tracks берём из music.js
+    let currentAudio = null;
 
-    let artsMode = false;
+    function playTrackByName(name) {
+        if (typeof tracks === "undefined") return false; // если tracks нет
+        const track = tracks.find(t => t.name.toLowerCase() === name.toLowerCase());
+        if (!track) return false;
 
-    function updateUploadButtonState() {
-        if (artsMode) uploadBtn.classList.remove("disabled-upload");
-        else uploadBtn.classList.add("disabled-upload");
-    }
-
-    // === Добавление изображения в галерею ===
-    function addImage(url, id) {
-        const wrap = document.createElement("div");
-        wrap.classList.add("img-wrapper");
-        wrap.style.position = "relative";
-
-        const img = document.createElement("img");
-        img.src = url;
-        wrap.appendChild(img);
-
-        if (artsMode) {
-            const delBtn = document.createElement("button");
-            delBtn.classList.add("del-btn");
-            delBtn.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                    <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
-                    <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
-                </svg>`;
-
-            delBtn.onclick = () => {
-                fetch(`${SERVER_URL}/delete?id=${encodeURIComponent(id)}`, { method: "DELETE" })
-                    .then(res => res.json())
-                    .then(() => loadServerImages())
-                    .catch(() => alert("Ошибка удаления"));
-            };
-
-            wrap.appendChild(delBtn);
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
         }
 
-        gallery.appendChild(wrap);
+        currentAudio = new Audio(track.file);
+        currentAudio.play();
+        return true;
     }
 
-    // === Получаем список изображений с сервера ===
-    function loadServerImages() {
-        fetch(`${SERVER_URL}/list`)
-            .then(res => res.json())
-            .then(list => {
-                gallery.innerHTML = "";
-                list.forEach(img => addImage(img.url, img.id));
-            })
-            .catch(() => consoleOutput.textContent = "Не удалось загрузить изображения с сервера.");
-    }
+    // === Секретные треки (не отображаются на сайте) ===
+    const secretTracks = [
+        { name: "insanity", file: "music/sans-insanity.mp3" },
+        { name: "sonata",   file: "music/moonlightsonata-cid.mp3" },
+        { name: "kira",     file: "music/death-note.mp3" },
+        { name: "jazz",     file: "music/жабий-джаз.mp3" },
+        { name: "connibal", file: "music/sim-connibal.mp3" }
+    ];
 
-    // === Элемент выбора файла ===
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.style.display = "none";
-    document.body.appendChild(fileInput);
+    // =====================================================
+    // ===================== КОНСОЛЬ ========================
+    // =====================================================
 
-    // === Загрузка изображения на сервер ===
-    fileInput.onchange = () => {
-        if (!artsMode) return;
-        const file = fileInput.files[0];
-        if (!file) return;
+    const consoles = document.querySelectorAll(".console-container");
 
-        const form = new FormData();
-        form.append("image", file);
+    consoles.forEach(c => {
+        const input = c.querySelector(".consoleInput");
+        const btn = c.querySelector(".consoleBtn");
+        const output = c.querySelector(".consoleOutput");
 
-        fetch(`${SERVER_URL}/upload`, {
-            method: "POST",
-            body: form
-        })
-        .then(res => res.json())
-        .then(data => {
-            loadServerImages();
-        })
-        .catch(() => alert("Ошибка загрузки"));
-    };
-
-    uploadBtn.onclick = () => {
-        if (!artsMode) return;
-        fileInput.click();
-    };
-
-    // === Консольная команда ===
-    consoleBtn.onclick = () => {
-        const cmd = consoleInput.value.trim().toLowerCase();
-
-        if (cmd === "arts") {
-            artsMode = true;
-            updateUploadButtonState();
-            loadServerImages();
-            consoleOutput.textContent = "Режим редактирования включён.";
-        } else {
-            consoleOutput.textContent = "Неизвестная команда. 😡";
+        function updateOutput(msg) {
+            if (output) output.textContent = msg;
         }
 
-        consoleInput.value = "";
-    };
+        btn.addEventListener("click", () => {
+            const cmd = input.value.trim();
+            if (!cmd) return;
 
-    loadServerImages();
-    updateUploadButtonState();
+            input.value = "";
+            const cmdLower = cmd.toLowerCase();
+
+            // ===== Навигация =====
+            if (cmdLower === "что добавили?") {
+                window.location.href = "changelog.html";
+                return;
+            }
+
+            if (cmdLower === "chapter0") {
+                window.location.href = "lore/chapter0.html";
+                return;
+            }
+
+            if (cmdLower === "chapter1") {
+                window.location.href = "lore/chapter1.html";
+                return;
+            }
+
+            // ===== Переход в игру =====
+            if (cmdLower === "game") {
+                window.location.href = "game/game.html";
+                return;
+            }
+
+            // ===== Музыка =====
+            if (/^mhs[\d,\.]*$/i.test(cmd) || cmdLower === "rin" || cmdLower === "sim" || secretTracks.some(t => t.name.toLowerCase() === cmdLower)) {
+                let trackName;
+
+                if (cmdLower === "rin") {
+                    trackName = "TravelersTheme";
+                } else if (cmdLower === "sim") {
+                    trackName = "CandyRain";
+                } else {
+                    trackName = cmdLower; // для секретных треков используем код команды
+                }
+
+                // сначала ищем в обычных треках
+                let success = playTrackByName(trackName);
+
+                // если не найдено, ищем в секретных
+                if (!success && typeof secretTracks !== "undefined") {
+                    const track = secretTracks.find(t => t.name.toLowerCase() === trackName.toLowerCase());
+                    if (track) {
+                        if (currentAudio) {
+                            currentAudio.pause();
+                            currentAudio.currentTime = 0;
+                        }
+                        currentAudio = new Audio(track.file);
+                        currentAudio.play();
+                        success = true;
+                    }
+                }
+
+                if (success)
+                    updateOutput(`Воспроизводится трек: ${trackName}`);
+                else
+                    updateOutput(`Трек ${trackName} не найден.`);
+
+                return;
+            }
+
+            // ===== Остановить музыку =====
+            if (cmdLower === "mute") {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    updateOutput("Музыка остановлена.");
+                } else {
+                    updateOutput("Музыка не воспроизводится.");
+                }
+                return;
+            }
+
+            // ===== Арты =====
+            if (cmdLower === "arts") {
+                if (window.enableArtsMode) window.enableArtsMode();
+                updateOutput("Режим редактирования включён.");
+                return;
+            }
+
+            // ===== Служебные команды =====
+            switch (cmdLower) {
+                case "info":
+                    updateOutput("Доступные команды: info, version, MHS1-MHS15, Rin, sim, mute, что добавили?, chapter0, chapter1, game");
+                    break;
+
+                case "version":
+                    updateOutput(`Текущая версия сайта: ${SITE_VERSION}`);
+                    break;
+
+                default:
+                    updateOutput("Неизвестная команда... попробуйте команду info 💙");
+            }
+        });
+
+        input.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") btn.click();
+        });
+    });
 });
