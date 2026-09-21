@@ -53,11 +53,8 @@ app.get("/list", async (req, res) => {
   try {
     const allFiles = [];
     let nextCursor = undefined;
-    let page = 0;
 
     do {
-      page++;
-
       const params = {
         type: "upload",
         prefix: "mf-wiki-arts/",
@@ -70,27 +67,22 @@ app.get("/list", async (req, res) => {
 
       const result = await cloudinary.api.resources(params);
 
-      console.log(
-        `Страница ${page}: ${result.resources.length} файлов`
-      );
-
       allFiles.push(
         ...result.resources.map(img => ({
           url: img.secure_url,
-          id: img.public_id
+          id: img.public_id,
+          created_at: img.created_at
         }))
       );
 
       nextCursor = result.next_cursor || undefined;
 
-      console.log(
-        `next_cursor: ${nextCursor ? "есть" : "нет"}`
-      );
-
     } while (nextCursor);
 
-    console.log(
-      `ВСЕГО файлов отправляем клиенту: ${allFiles.length}`
+    // Сначала новые, потом старые
+    allFiles.sort(
+      (a, b) =>
+        new Date(b.created_at) - new Date(a.created_at)
     );
 
     res.json(allFiles);
