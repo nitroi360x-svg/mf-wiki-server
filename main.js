@@ -1,11 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
     console.log("Wiki loaded in neon retro mode.");
 
-    const SITE_VERSION = "V.2.0";
+const SITE_VERSION = "V.2.6";
 
-    // === Версия сайта ===
-    const versionLabel = document.querySelector(".version-label");
-    if (versionLabel) versionLabel.textContent = SITE_VERSION;
+const versionLabel = document.querySelector(".version-label");
+if (versionLabel) versionLabel.textContent = SITE_VERSION;
 
     // =====================================================
     // ===================== МУЗЫКА ========================
@@ -35,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
         { name: "sonata",   file: "music/moonlightsonata-cid.mp3" },
         { name: "kira",     file: "music/death-note.mp3" },
         { name: "jazz",     file: "music/жабий-джаз.mp3" },
-        { name: "connibal", file: "music/sim-connibal.mp3" }
+        { name: "kannibal", file: "music/sim-connibal.mp3" }
     ];
 
     // =====================================================
@@ -78,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // ===== Переход в игру =====
             if (cmdLower === "game") {
-                window.location.href = "game/game.html";
+                window.location.href = "game/create.html";
                 return;
             }
 
@@ -141,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // ===== Служебные команды =====
             switch (cmdLower) {
                 case "info":
-                    updateOutput("Доступные команды: info, version, MHS1-MHS15, Rin, sim, mute, что добавили?, chapter0, chapter1, game");
+                    updateOutput("Доступные команды: info, version, MHS1-MHS18, Rin, sim, mute, что добавили?, chapter0, chapter1, game");
                     break;
 
                 case "version":
