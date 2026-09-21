@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tmp/" }));
 
-// ——— Cloudinary настройки ———
+// ——— Настройки Cloudinary ———
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_KEY,
@@ -36,22 +36,42 @@ app.post("/upload", async (req, res) => {
   }
 });
 
-// ——— Получение списка изображений ———
+// ——— Получение списка всех изображений ———
 app.get("/list", async (req, res) => {
   try {
-    const result = await cloudinary.search
-      .expression('folder="mf-wiki-arts"')
-      .sort_by('created_at', 'desc')
-      .execute();
+    let allFiles = [];
+    let nextCursor = null;
 
-    const files = result.resources.map(img => ({
-      url: img.secure_url,
-      id: img.public_id
-    }));
+    do {
+      const params = {
+        type: "upload",
+        prefix: "mf-wiki-arts/",
+        max_results: 100
+      };
 
-    res.json(files);
+      if (nextCursor) {
+        params.next_cursor = nextCursor;
+      }
+
+      const result = await cloudinary.api.resources(params);
+
+      allFiles = allFiles.concat(
+        result.resources.map(img => ({
+          url: img.secure_url,
+          id: img.public_id
+        }))
+      );
+
+      nextCursor = result.next_cursor;
+    } while (nextCursor);
+
+    res.json(allFiles);
   } catch (err) {
-    res.status(500).json({ error: "List failed", details: err });
+    console.error(err);
+    res.status(500).json({
+      error: "List failed",
+      details: err.message
+    });
   }
 });
 
