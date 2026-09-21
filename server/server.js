@@ -43,28 +43,35 @@ app.get("/list", async (req, res) => {
     let nextCursor = null;
 
     do {
-      const result = await cloudinary.api.resources({
+      const params = {
         type: "upload",
         prefix: "mf-wiki-arts/",
-        max_results: 100,
-        next_cursor: nextCursor
-      });
+        max_results: 100
+      };
 
-      console.log("Получено ресурсов:", result.resources.length, "next_cursor:", result.next_cursor);
+      if (nextCursor) {
+        params.next_cursor = nextCursor;
+      }
 
-      allFiles = allFiles.concat(result.resources.map(img => ({
-        url: img.secure_url,
-        id: img.public_id
-      })));
+      const result = await cloudinary.api.resources(params);
+
+      allFiles = allFiles.concat(
+        result.resources.map(img => ({
+          url: img.secure_url,
+          id: img.public_id
+        }))
+      );
 
       nextCursor = result.next_cursor;
     } while (nextCursor);
 
-    console.log("Всего ресурсов после цикла:", allFiles.length);
-
     res.json(allFiles);
   } catch (err) {
-    res.status(500).json({ error: "List failed", details: err });
+    console.error(err);
+    res.status(500).json({
+      error: "List failed",
+      details: err.message
+    });
   }
 });
 
